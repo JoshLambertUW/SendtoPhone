@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.preference.PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <android.support.v7.preference.SwitchPreferenceCompat
+        android:key="notifications"
+        android:title="Enable notifications"
+        android:defaultValue="true" />
+    <android.support.v7.preference.EditTextPreference
+        android:key="name"
+        android:title="Customize the name of this device"
+        android:dialogMessage="Customize the name of this device that appears on other devices" />
+    <android.support.v7.preference.Preference
+        android:key="device_deletion"
+        android:title="Delete device"
+        android:summary="Clear all messages and stop this device from appearing on other devices"/>
+    <android.support.v7.preference.Preference
+        android:key="logout"
+        android:title="Log Out"/>
+</android.support.v7.preference.PreferenceScreen>

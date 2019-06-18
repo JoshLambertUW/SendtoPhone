@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "926700184689",
+    "firebase_url": "https://sendtophone.firebaseio.com",
+    "project_id": "sendtophone",
+    "storage_bucket": "sendtophone.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:926700184689:android:a9390b3c2f14f5e3",
+        "android_client_info": {
+          "package_name": "com.stp.sendtophone"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "926700184689-qiakecn4og367onj7fa29ejbf7uucomm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.stp.sendtophone",
+            "certificate_hash": "593a45c552096183b52e0a56c4e8ac9ad5d3f69d"
+          }
+        },
+        {
+          "client_id": "926700184689-jcob74gaf6qoj5d7d2j4sot0mvg6qi8m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAkweoc8EKP-4T7tK0x8n8LbDjnYHFUfoI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "926700184689-jcob74gaf6qoj5d7d2j4sot0mvg6qi8m.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
