@@ -13,6 +13,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.gson.Gson;
 
 import java.util.ArrayList;
@@ -22,9 +23,8 @@ public class MyWorker extends Worker {
     private static final String TAG = "MyWorker";
     private String messagesFromDB = "";
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
-    private String instanceId  = "dzO7A-tiiGA";
     private String userUid = FirebaseAuth.getInstance().getUid();
-    //instanceId = FirebaseInstanceId.getInstance().getId();
+    private String instanceId = FirebaseInstanceId.getInstance().getId();
     private DocumentReference docRef = db.collection("users").document(userUid).
             collection("devices").document(instanceId);
 

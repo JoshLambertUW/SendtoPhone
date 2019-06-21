@@ -1,10 +1,15 @@
 package com.stp.sendtophone;
 
-import android.app.Activity;
-import android.net.Uri;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.StringRes;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.ShareActionProvider;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -12,23 +17,29 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import static android.content.Context.CLIPBOARD_SERVICE;
+
 public class SingleMessageFragment extends Fragment {
     public static String TAG = "MessageFragment";
     private TextView messageTextView;
+    private ShareActionProvider shareActionProvider;
+    SingleMessageDeletionListener callback;
 
     private static final String MESSAGE_ARG = "selectedmessage";
+    private static final String POSITION_ARG = "selectedmessageposition";
 
-    // TODO: Rename and change types of parameters
     private String selectedMessage;
-    private SingleMessageDeletionListener mListener;
+    private int selectedmessagePosition;
 
     public SingleMessageFragment(){
     }
 
-    public static SingleMessageFragment newInstance(String selectedMessage) {
+    public static SingleMessageFragment newInstance(String selectedMessage, int selectedmessagePosition) {
         SingleMessageFragment fragment = new SingleMessageFragment();
         Bundle args = new Bundle();
         args.putString(MESSAGE_ARG, selectedMessage);
+        args.putInt(POSITION_ARG, selectedmessagePosition);
         fragment.setArguments(args);
         return fragment;
     }
@@ -40,6 +51,7 @@ public class SingleMessageFragment extends Fragment {
 
         if (getArguments() != null) {
             selectedMessage = getArguments().getString(getString(R.string.selected_message_key));
+            selectedmessagePosition = getArguments().getInt(getString(R.string.selected_message_position));
         }
     }
 
@@ -51,6 +63,8 @@ public class SingleMessageFragment extends Fragment {
         messageTextView = view.findViewById(R.id.single_message_text_view);
         messageTextView.setText(selectedMessage);
         ((AppCompatActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        ((AppCompatActivity) getActivity()).getSupportActionBar().setDisplayShowTitleEnabled(false);
+
         return view;
     }
 
@@ -59,64 +73,48 @@ public class SingleMessageFragment extends Fragment {
         super.onCreateOptionsMenu(menu, inflater);
         menu.clear();
         inflater.inflate(R.menu.menu_single_message, menu);
+        MenuItem item = menu.findItem(R.id.menu_item_share);
+        ShareActionProvider myShareActionProvider =
+                (ShareActionProvider) MenuItemCompat.getActionProvider(item);
+
+        Intent myShareIntent = new Intent(Intent.ACTION_SEND);
+        myShareIntent.setType("text/plain");
+        myShareIntent.putExtra(Intent.EXTRA_TEXT, selectedMessage);
+        myShareActionProvider.setShareIntent(myShareIntent);
     }
-    //ToDo: Implement menu functions
+
+    public void addToClipboard(){
+        ClipboardManager clipboard = (ClipboardManager)getContext().getSystemService(CLIPBOARD_SERVICE);
+        ClipData clip = ClipData.newPlainText("Message", selectedMessage);
+        clipboard.setPrimaryClip(clip);
+        showSnackbar(R.string.added_to_clipboard);
+    }
+
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.action_settings:
-                return true;
             case R.id.action_delete:
-                getFragmentManager().popBackStack();
+                callback.singleMessageDeletion(selectedmessagePosition);
+                return true;
+            case R.id.action_copy:
+                addToClipboard();
                 return true;
             default:
-                // If we got here, the user's action was not recognized.
-                // Invoke the superclass to handle it.
                 return super.onOptionsItemSelected(item);
         }
     }
 
-    @Override
-    public void onStart() {
-        super.onStart();
-    }
-/*
-    // TODO: Rename method, update argument and hook method into UI event
-    public void onButtonPressed(Uri uri) {
-        if (mListener != null) {
-            mListener.onFragmentInteraction(uri);
-        }
+    public void setOnMessageDeletionListener(SingleMessageDeletionListener callback) {
+        this.callback = callback;
     }
 
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        if (context instanceof SingleMessageDeletionListener) {
-            mListener = (SingleMessageDeletionListener) context;
-        } else {
-            throw new RuntimeException(context.toString()
-                    + " must implement OnFragmentInteractionListener");
-        }
-    }
-*/
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        mListener = null;
-    }
-
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
     public interface SingleMessageDeletionListener {
-        // TODO: Update argument type and name
-        void SingleMessageDeletionListener(Uri uri);
+        void singleMessageDeletion(int selectedmessagePosition);
+    }
+
+    private void showSnackbar(@StringRes int snackMessage) {
+        Snackbar.make(getView().findViewById(android.R.id.content), snackMessage, Snackbar.LENGTH_LONG).show();
     }
 }
+

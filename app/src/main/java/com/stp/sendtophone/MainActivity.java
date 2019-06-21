@@ -8,9 +8,9 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DividerItemDecoration;
@@ -33,11 +33,13 @@ import java.util.List;
 
 // Features: Send from device
 
-public class MainActivity extends AppCompatActivity implements RecyclerViewAdapter.RecyclerViewClickListener, FirebaseAuth.AuthStateListener {
+public class MainActivity extends AppCompatActivity implements RecyclerViewAdapter.RecyclerViewClickListener, FirebaseAuth.AuthStateListener
+        , SingleMessageFragment.SingleMessageDeletionListener {
     private static final int RC_SIGN_IN = 808;
     private RecyclerViewAdapter adapter;
     private List<String> messageList = new ArrayList<>();
     private RecyclerView recyclerView;
+    private LinearLayoutManager linearLayoutManager;
     private SharedPreferences sharedPreferences;
     private AlertDialog dialog;
     AlertDialog.Builder builder;
@@ -45,7 +47,9 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
     SharedPreferences.OnSharedPreferenceChangeListener listener = new SharedPreferences.OnSharedPreferenceChangeListener() {
         @Override
         public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
-            messageList = SharedPrefHelper.getMsgArrayList(MainActivity.this);
+            messageList.clear();
+            List<String> updatedMessages = SharedPrefHelper.getMsgArrayList(MainActivity.this);
+            messageList.addAll(updatedMessages);
             adapter.notifyDataSetChanged();
         }
     };
@@ -56,11 +60,9 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
         setContentView(R.layout.activity_main);
 
         recyclerView = findViewById(R.id.recyclerView);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         Toolbar myToolbar = findViewById(R.id.toolbar);
         setSupportActionBar(myToolbar);
-
         sharedPreferences = getSharedPreferences(getString(R.string.preference_file_key),
                 MODE_PRIVATE);
         /*
@@ -152,6 +154,9 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
+            case R.id.action_sort_list:
+                reverseList();
+                return true;
             case R.id.action_settings:
                 launchSettings();
                 return true;
@@ -166,20 +171,33 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
         }
     }
 
-    private void clearMessage(int position){
+    private void clearMessages(int position){
         SharedPrefHelper.clearMessages(this, position);
         showSnackbar(R.string.delete_message_toast);
     }
 
-    private void clearAllMessages() {
+    private void clearMessages() {
         SharedPrefHelper.clearMessages(this);
         showSnackbar(R.string.delete_all_toast);
+    }
+
+    private void reverseList(){
+        if (linearLayoutManager.getReverseLayout()){
+            linearLayoutManager.setReverseLayout(false);
+            linearLayoutManager.setStackFromEnd(false);
+        }
+        else {
+            linearLayoutManager.setReverseLayout(true);
+            linearLayoutManager.setStackFromEnd(true);
+        }
     }
 
     @Override
     public void onBackPressed() {
         recyclerView.setVisibility(View.VISIBLE);
+        getSupportActionBar().setDisplayShowCustomEnabled(false);
         getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+        getSupportActionBar().setDisplayShowTitleEnabled(true);
         super.onBackPressed();
     }
 
@@ -192,13 +210,15 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
                 DividerItemDecoration.VERTICAL);
         recyclerView.addItemDecoration(dividerItemDecoration);
         recyclerView.setAdapter(adapter);
+        linearLayoutManager = new LinearLayoutManager(this);
+        recyclerView.setLayoutManager(linearLayoutManager);
         adapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
             @Override
             public void onItemRangeInserted(int positionStart, int itemCount) {
                 recyclerView.smoothScrollToPosition(0);
             }
         });
-        recyclerView.setVisibility(View.VISIBLE);
+        //recyclerView.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -206,11 +226,11 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
         SingleMessageFragment messageFragment = new SingleMessageFragment();
         Bundle b = new Bundle();
         b.putString(getString(R.string.selected_message_key), adapter.getItem(position));
+        b.putInt(getString(R.string.selected_message_position), position);
         messageFragment.setArguments(b);
         FragmentManager fm = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fm
                 .beginTransaction();
-        getSupportActionBar().setTitle(getString(R.string.received));
         fragmentTransaction.replace(R.id.frame_layout,
                 messageFragment).addToBackStack(null).commit();
     }
@@ -237,7 +257,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
         builder.setPositiveButton(R.string.continue_dialog_button, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int id) {
-                SharedPrefHelper.clearMessages(MainActivity.this);
+                clearMessages();
             }
         });
 
@@ -259,7 +279,11 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
         builder.setPositiveButton(R.string.continue_dialog_button, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int id) {
-                SharedPrefHelper.clearMessages(MainActivity.this, selected);
+                clearMessages(selected);
+                getSupportFragmentManager().popBackStack();
+                getSupportActionBar().setDisplayShowCustomEnabled(false);
+                getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+                getSupportActionBar().setDisplayShowTitleEnabled(true);
             }
         });
 
@@ -273,5 +297,17 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
         dialog.show();
     }
 
+    @Override
+    public void onAttachFragment(Fragment fragment) {
+        if (fragment instanceof SingleMessageFragment) {
+            SingleMessageFragment singleMessageFragment = (SingleMessageFragment) fragment;
+            singleMessageFragment.setOnMessageDeletionListener(this);
+        }
+    }
+
+    public void singleMessageDeletion(int position) {
+        showDeletionDialog(recyclerView, position);
+    }
 }
+
 

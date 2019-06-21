@@ -3,14 +3,18 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorBackground"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:clickable="true">
 
     <TextView
         android:id="@+id/single_message_text_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_alignParentTop="true"
-        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-        android:textColor="@color/colorPrimaryDark" />
+        android:layout_margin="@dimen/text_margin"
+        android:clickable="true"
+        android:focusable="true"
+        android:textColor="@color/colorPrimaryDark"
+        android:textSize="18sp" />
 
 </android.support.design.widget.CoordinatorLayout>

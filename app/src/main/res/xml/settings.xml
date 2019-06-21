@@ -5,10 +5,6 @@
         android:key="notifications"
         android:title="Enable notifications"
         android:defaultValue="true" />
-    <android.support.v7.preference.EditTextPreference
-        android:key="name"
-        android:title="Customize the name of this device"
-        android:dialogMessage="Customize the name of this device that appears on other devices" />
     <android.support.v7.preference.Preference
         android:key="device_deletion"
         android:title="Delete device"

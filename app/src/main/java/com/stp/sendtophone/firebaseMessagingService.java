@@ -25,6 +25,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 import com.google.gson.Gson;
@@ -33,17 +34,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.stp.sendtophone.SharedPrefHelper.saveNewMessage;
-
 public class firebaseMessagingService extends FirebaseMessagingService {
 
     private static final String TAG = "firebaseMsgService";
     private static final String JOB_GROUP_NAME = "firestoreRequests";
 
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
-    private String instanceId  = "dzO7A-tiiGA";
     private String userUid = FirebaseAuth.getInstance().getUid();
-    //instanceId = FirebaseInstanceId.getInstance().getId();
+    private String instanceId = FirebaseInstanceId.getInstance().getId();
     private DocumentReference docRef = db.collection("users").document(userUid).
             collection("devices").document(instanceId);
 
@@ -73,7 +71,6 @@ public class firebaseMessagingService extends FirebaseMessagingService {
         // messages. For more see: https://firebase.google.com/docs/cloud-messaging/concept-options
         // [END_EXCLUDE]
 
-        // TODO(developer): Handle FCM messages here.
         // Not getting messages here? See why this may be: https://goo.gl/39bRNJ
         Log.d(TAG, "From: " + remoteMessage.getFrom());
 
@@ -96,8 +93,7 @@ public class firebaseMessagingService extends FirebaseMessagingService {
             Log.d(TAG, "Message Notification Body: " + remoteMessage.getNotification().getBody());
         }
 
-        // Also if you intend on generating your own notifications as a result of a received FCM
-        // message, here is where that should be initiated. See sendNotification method below.
+        sendNotification(remoteMessage.getData().get("messagePreview"));
     }
     // [END receive_message]
 
@@ -112,7 +108,6 @@ public class firebaseMessagingService extends FirebaseMessagingService {
     @Override
     public void onNewToken(String token) {
         Log.d(TAG, "Refreshed token: " + token);
-        //toDo: Transfer old data if on device
         // If you want to send messages to this application instance or
         // manage this apps subscriptions on the server side, send the
         // Instance ID token to your app server.
@@ -140,33 +135,8 @@ public class firebaseMessagingService extends FirebaseMessagingService {
      * @param message
      */
     private void handleNow(String message) {
-        saveNewMessage(this, message);
+        SharedPrefHelper.saveNewMessage(this, message);
         Log.d(TAG, "Short lived task is done.");
-    }
-        /*
-    }
-        sharedPreferences = getSharedPreferences(getString(R.string.preference_file_key),
-                MODE_PRIVATE);
-        editor = sharedPreferences.edit();
-        String messageListJson = sharedPreferences.getString(getString(R.string.preference_messages_key), "");
-        String newMessageJson = gson.toJson(message);
-
-        JSONArray jsonArrayProduct = new JSONArray();
-
-        try {
-            if(messageListJson.length()!=0){
-                jsonArrayProduct = new JSONArray(messageListJson);
-            }
-            jsonArrayProduct.put(new JSONObject(newMessageJson));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        editor.putString(getString(R.string.preference_messages_key), gson.toJson(jsonArrayProduct));
-        editor.commit();
-        //to get back: int[] ints2 = gson.fromJson("[1,2,3,4,5]", int[].class);
-        Log.d(TAG, "Short lived task is done.");
-        /*
     }
 
     /**
@@ -187,14 +157,14 @@ public class firebaseMessagingService extends FirebaseMessagingService {
         else {
             deviceName = Build.MANUFACTURER + " " + Build.MODEL;
         }
-
         Map<String, Object> newDevice = new HashMap<>();
         newDevice.put(getString(R.string.fcm_token_key), token);
         newDevice.put(getString(R.string.messages_key), new ArrayList<String>());
         newDevice.put(getString(R.string.device_name_key), deviceName);
 
         docRef = db.collection("users").document(userUid).
-                collection("devices").document(token);
+                collection("devices").document(instanceId);
+
         docRef.set(newDevice).addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
@@ -211,9 +181,9 @@ public class firebaseMessagingService extends FirebaseMessagingService {
     /**
      * Create and show a simple notification containing the received FCM message.
      *
-     * @param messageBody FCM message body received.
+     * @param messagePreview received from FCM message body.
      */
-    private void sendNotification(String messageBody) {
+    private void sendNotification(String messagePreview) {
         Intent intent = new Intent(this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0 /* Request code */, intent,
@@ -223,9 +193,9 @@ public class firebaseMessagingService extends FirebaseMessagingService {
         Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         NotificationCompat.Builder notificationBuilder =
                 new NotificationCompat.Builder(this, channelId)
-                        //.setSmallIcon(R.drawable.ic_stat_ic_notification)
+                        .setSmallIcon(R.drawable.ic_stat_notification)
                         .setContentTitle(getString(R.string.fcm_message))
-                        .setContentText(messageBody)
+                        .setContentText(messagePreview)
                         .setAutoCancel(true)
                         .setSound(defaultSoundUri)
                         .setContentIntent(pendingIntent);
@@ -235,8 +205,7 @@ public class firebaseMessagingService extends FirebaseMessagingService {
 
         // Since android Oreo notification channel is needed.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(channelId,
-                    "Channel human readable title",
+            NotificationChannel channel = new NotificationChannel(channelId, "Send to Phone notification channel",
                     NotificationManager.IMPORTANCE_DEFAULT);
             notificationManager.createNotificationChannel(channel);
         }
