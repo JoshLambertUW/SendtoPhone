@@ -52,53 +52,26 @@ public class firebaseMessagingService extends FirebaseMessagingService {
      * @param remoteMessage Object representing the message received from Firebase Cloud Messaging.
      */
 
-    // [START receive_message]
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
-        // [START_EXCLUDE]
-        // There are two types of messages data messages and notification messages. Data messages
-        // are handled
-        // here in onMessageReceived whether the app is in the foreground or background. Data
-        // messages are the type
-        // traditionally used with GCM. Notification messages are only received here in
-        // onMessageReceived when the app
-        // is in the foreground. When the app is in the background an automatically generated
-        // notification is displayed.
-        // When the user taps on the notification they are returned to the app. Messages
-        // containing both notification
-        // and data payloads are treated as notification messages. The Firebase console always
-        // sends notification
-        // messages. For more see: https://firebase.google.com/docs/cloud-messaging/concept-options
-        // [END_EXCLUDE]
-
-        // Not getting messages here? See why this may be: https://goo.gl/39bRNJ
         Log.d(TAG, "From: " + remoteMessage.getFrom());
 
-        // Check if message contains a data payload.
         if (remoteMessage.getData().size() > 0) {
             Log.d(TAG, "Message data payload: " + remoteMessage.getData());
-
-            // If message is small enough to fit in a FCM, save to device
-            // If not, grab any messages from database
             if (remoteMessage.getData().containsKey("message")) {
-                handleNow(remoteMessage.getData().get("message"));
+                String message = remoteMessage.getData().get("message");
+                if (message.length() > 40) sendNotification(message.substring(0,40));
+                else sendLargeNotification(message.substring(0,37) + "...", message.substring(0, 447) + "...");
+                handleNow(message);
             } else {
+                sendLargeNotification(remoteMessage.getData().get("messagePreview"), remoteMessage.getData().get("messagePreviewExtended"));
                 scheduleJob();
             }
-
         }
-
-        // Check if message contains a notification payload.
         if (remoteMessage.getNotification() != null) {
             Log.d(TAG, "Message Notification Body: " + remoteMessage.getNotification().getBody());
         }
-
-        sendNotification(remoteMessage.getData().get("messagePreview"));
     }
-    // [END receive_message]
-
-
-    // [START on_new_token]
 
     /**
      * Called if InstanceID token is updated. This may occur if the security of
@@ -107,13 +80,8 @@ public class firebaseMessagingService extends FirebaseMessagingService {
      */
     @Override
     public void onNewToken(String token) {
-        Log.d(TAG, "Refreshed token: " + token);
-        // If you want to send messages to this application instance or
-        // manage this apps subscriptions on the server side, send the
-        // Instance ID token to your app server.
         sendRegistrationToServer(token);
     }
-    // [END on_new_token]
 
     /**
      * Schedule async work using WorkManager.
@@ -183,6 +151,40 @@ public class firebaseMessagingService extends FirebaseMessagingService {
      *
      * @param messagePreview received from FCM message body.
      */
+
+    private void sendLargeNotification(String messagePreview, String messagePreviewExtended) {
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0 /* Request code */, intent,
+                PendingIntent.FLAG_ONE_SHOT);
+
+        String channelId = getString(R.string.default_notification_channel_id);
+        Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        NotificationCompat.Builder notificationBuilder =
+                new NotificationCompat.Builder(this, channelId)
+                        .setSmallIcon(R.drawable.ic_stat_notification)
+                        .setContentTitle(getString(R.string.fcm_message))
+                        .setContentText(messagePreview)
+                        .setAutoCancel(true)
+                        .setSound(defaultSoundUri)
+                        .setContentIntent(pendingIntent)
+                        .setStyle(new NotificationCompat.BigTextStyle()
+                        .bigText(messagePreviewExtended));
+
+        NotificationManager notificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        // Since android Oreo notification channel is needed.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(channelId, "Send to Phone notification channel",
+                    NotificationManager.IMPORTANCE_DEFAULT);
+            notificationManager.createNotificationChannel(channel);
+        }
+
+        notificationManager.notify(0 /* ID of notification */, notificationBuilder.build());
+    }
+
+
     private void sendNotification(String messagePreview) {
         Intent intent = new Intent(this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);

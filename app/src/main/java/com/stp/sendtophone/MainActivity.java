@@ -182,14 +182,8 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
     }
 
     private void reverseList(){
-        if (linearLayoutManager.getReverseLayout()){
-            linearLayoutManager.setReverseLayout(false);
-            linearLayoutManager.setStackFromEnd(false);
-        }
-        else {
-            linearLayoutManager.setReverseLayout(true);
-            linearLayoutManager.setStackFromEnd(true);
-        }
+        linearLayoutManager.setReverseLayout(!linearLayoutManager.getReverseLayout());
+        linearLayoutManager.setStackFromEnd(!linearLayoutManager.getStackFromEnd());
     }
 
     @Override
@@ -218,7 +212,6 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
                 recyclerView.smoothScrollToPosition(0);
             }
         });
-        //recyclerView.setVisibility(View.VISIBLE);
     }
 
     @Override

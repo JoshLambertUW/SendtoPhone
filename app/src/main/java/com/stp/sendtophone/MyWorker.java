@@ -14,7 +14,6 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.gson.Gson;
 
 import java.util.ArrayList;
 
@@ -29,7 +28,6 @@ public class MyWorker extends Worker {
             collection("devices").document(instanceId);
 
     private static Context context;
-    Gson gson = new Gson();
 
     public MyWorker(@NonNull Context appContext, @NonNull WorkerParameters workerParams) {
         super(appContext, workerParams);
@@ -39,7 +37,7 @@ public class MyWorker extends Worker {
     @NonNull
     @Override
     public Result doWork() {
-        // Get all new messages, convert new message array to JSON, add to local storage
+        // Get all new messages, save them into local storage, clear message queue
         try {
             docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
                 @Override
@@ -63,11 +61,6 @@ public class MyWorker extends Worker {
         } catch (Exception e) {
             return Result.failure();
         }
-        /*
-        Data outputData = new Data.Builder()
-                .putString("messagesFromDB", messagesFromDB)
-                .build();
-        */
         return Result.success();
     }
 }

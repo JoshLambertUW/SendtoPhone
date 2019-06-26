@@ -10,7 +10,7 @@
     DB Keys
     <string name="messages_key">messages</string>
     <string name="selected_message_key">selectedmessage</string>
-    <string name="device_name_key">devicename</string>
+    <string name="device_name_key">deviceName</string>
     <string name="fcm_token_key">fcmToken</string>
     <string name="selected_message_position">selectedmessageposition</string>
     Actions
@@ -22,7 +22,7 @@
     <string name="action_sort">Sort received messages</string>
     Cloud messaging
     <string name="default_notification_channel_id">fcm_default_channel</string>
-    <string name="fcm_message">FCM Message</string>
+    <string name="fcm_message">Messaged received</string>
     Application keys
     <string name="preference_file_key">com.stp.sendtophone.PREFERENCE_KEY</string>
     <string name="preference_messages_key">pref_messages</string>
