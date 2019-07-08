@@ -3,13 +3,11 @@ package com.stp.sendtophone;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
-import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
@@ -20,19 +18,12 @@ import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkContinuation;
 import androidx.work.WorkManager;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
-import com.google.gson.Gson;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 public class firebaseMessagingService extends FirebaseMessagingService {
 
@@ -40,12 +31,9 @@ public class firebaseMessagingService extends FirebaseMessagingService {
     private static final String JOB_GROUP_NAME = "firestoreRequests";
 
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
-    private String userUid = FirebaseAuth.getInstance().getUid();
-    private String instanceId = FirebaseInstanceId.getInstance().getId();
-    private DocumentReference docRef = db.collection("users").document(userUid).
-            collection("devices").document(instanceId);
-
-    Gson gson = new Gson();
+    private String userUid;
+    private String instanceId;
+    private DocumentReference docRef;
     /**
      * Called when message is received.
      *
@@ -60,7 +48,8 @@ public class firebaseMessagingService extends FirebaseMessagingService {
             Log.d(TAG, "Message data payload: " + remoteMessage.getData());
             if (remoteMessage.getData().containsKey("message")) {
                 String message = remoteMessage.getData().get("message");
-                if (message.length() > 40) sendNotification(message.substring(0,40));
+                if (message.length() < 40) sendNotification(message);
+                else if (message.length() > 40 && message.length() < 447) sendNotification(message.substring(0,40));
                 else sendLargeNotification(message.substring(0,37) + "...", message.substring(0, 447) + "...");
                 handleNow(message);
             } else {
@@ -117,33 +106,12 @@ public class firebaseMessagingService extends FirebaseMessagingService {
      */
 
     private void sendRegistrationToServer(String token) {
-        String deviceName;
-        BluetoothAdapter myDevice = BluetoothAdapter.getDefaultAdapter();
-        if (myDevice != null && myDevice.getName() != ""){
-            deviceName = myDevice.getName();
-        }
-        else {
-            deviceName = Build.MANUFACTURER + " " + Build.MODEL;
-        }
-        Map<String, Object> newDevice = new HashMap<>();
-        newDevice.put(getString(R.string.fcm_token_key), token);
-        newDevice.put(getString(R.string.messages_key), new ArrayList<String>());
-        newDevice.put(getString(R.string.device_name_key), deviceName);
-
+        userUid = FirebaseAuth.getInstance().getUid();
+        instanceId = FirebaseInstanceId.getInstance().getId();
         docRef = db.collection("users").document(userUid).
                 collection("devices").document(instanceId);
 
-        docRef.set(newDevice).addOnSuccessListener(new OnSuccessListener<Void>() {
-            @Override
-            public void onSuccess(Void aVoid) {
-                Log.d(TAG, "DocumentSnapshot successfully written!");
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                Log.w(TAG, "Error writing document", e);
-            }
-        });
+        docRef.update(getString(R.string.fcm_token_key), token);
     }
 
     /**

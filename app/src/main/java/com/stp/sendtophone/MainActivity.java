@@ -1,100 +1,76 @@
 package com.stp.sendtophone;
 
-import android.content.DialogInterface;
+import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
-import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
 import android.support.design.widget.Snackbar;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.DividerItemDecoration;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
+import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.ErrorCodes;
 import com.firebase.ui.auth.IdpResponse;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.InstanceIdResult;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 // Features: Send from device
 
-public class MainActivity extends AppCompatActivity implements RecyclerViewAdapter.RecyclerViewClickListener, FirebaseAuth.AuthStateListener
-        , SingleMessageFragment.SingleMessageDeletionListener {
+public class MainActivity extends AppCompatActivity {
     private static final int RC_SIGN_IN = 808;
-    private RecyclerViewAdapter adapter;
-    private List<String> messageList = new ArrayList<>();
-    private RecyclerView recyclerView;
-    private LinearLayoutManager linearLayoutManager;
-    private SharedPreferences sharedPreferences;
-    private AlertDialog dialog;
-    AlertDialog.Builder builder;
+    private Button loginButton;
 
-    SharedPreferences.OnSharedPreferenceChangeListener listener = new SharedPreferences.OnSharedPreferenceChangeListener() {
-        @Override
-        public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
-            messageList.clear();
-            List<String> updatedMessages = SharedPrefHelper.getMsgArrayList(MainActivity.this);
-            messageList.addAll(updatedMessages);
-            adapter.notifyDataSetChanged();
-        }
-    };
+    private static final String TAG = "firebaseMsgService";
+    private static final String JOB_GROUP_NAME = "firestoreRequests";
+
+    private FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private String userUid;
+    private String instanceId;
+    private DocumentReference docRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        recyclerView = findViewById(R.id.recyclerView);
-
-        Toolbar myToolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(myToolbar);
-        sharedPreferences = getSharedPreferences(getString(R.string.preference_file_key),
-                MODE_PRIVATE);
-        /*
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        loginButton = findViewById(R.id.loginButton);
+        loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+            public void onClick(View v) {
+                startSignIn();
             }
         });
-        */
     }
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.menu_main, menu);
-        return true;
-    }
+
     @Override
     public void onStart() {
         super.onStart();
-        if (isSignedIn()) { attachRecyclerViewAdapter(); }
-        FirebaseAuth.getInstance().addAuthStateListener(this);
+        if (isSignedIn()) {
+            Intent intent = new Intent(this, ListActivity.class);
+            startActivity(intent);
+        } else {
+            loginButton.setVisibility(View.VISIBLE);
+        }
     }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-        FirebaseAuth.getInstance().removeAuthStateListener(this);
-        sharedPreferences.unregisterOnSharedPreferenceChangeListener(listener);
-    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -104,12 +80,64 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
         }
     }
 
+    private void registerDevice(){
+        userUid = FirebaseAuth.getInstance().getUid();
+        instanceId = FirebaseInstanceId.getInstance().getId();
+        docRef = db.collection("users").document(userUid).
+                collection("devices").document(instanceId);
+
+        docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                if (task.isSuccessful()) {
+                    DocumentSnapshot document = task.getResult();
+                    if (!document.exists()) {
+                        FirebaseInstanceId.getInstance().getInstanceId()
+                                .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
+                                    @Override
+                                    public void onComplete(@NonNull Task<InstanceIdResult> task) {
+                                        String deviceName;
+                                        BluetoothAdapter myDevice = BluetoothAdapter.getDefaultAdapter();
+                                        if (myDevice != null && myDevice.getName() != ""){
+                                            deviceName = myDevice.getName();
+                                        }
+                                        else {
+                                            deviceName = Build.MANUFACTURER + " " + Build.MODEL;
+                                        }
+                                        Map<String, Object> newDevice = new HashMap<>();
+                                        newDevice.put(getString(R.string.messages_key), new ArrayList<String>());
+                                        newDevice.put(getString(R.string.device_name_key), deviceName);
+                                        String token = task.getResult().getToken();
+                                        newDevice.put(getString(R.string.fcm_token_key), token);
+
+                                        docRef.set(newDevice).addOnSuccessListener(new OnSuccessListener<Void>() {
+                                            @Override
+                                            public void onSuccess(Void aVoid) {
+                                                Log.d(TAG, "DocumentSnapshot successfully written!");
+                                            }
+                                        }).addOnFailureListener(new OnFailureListener() {
+                                            @Override
+                                            public void onFailure(@NonNull Exception e) {
+                                                Log.w(TAG, "Error writing document", e);
+                                            }
+                                        });
+                                    }
+                                });
+                    }
+                } else {
+                    Log.d(TAG, "messageDocumentFailure", task.getException());
+                }
+            }
+        });
+    }
+
     private void handleSignInResponse(int resultCode, @Nullable Intent data) {
         IdpResponse response = IdpResponse.fromResultIntent(data);
 
         if (resultCode == RESULT_OK) {
-            attachRecyclerViewAdapter();
-            finish();
+            registerDevice();
+            Intent intent = new Intent(this, ListActivity.class);
+            startActivity(intent);
         } else {
             // Sign in failed
             if (response == null) {
@@ -123,184 +151,20 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
         }
     }
 
-    @Override
-    public void onAuthStateChanged(@NonNull FirebaseAuth auth) {
-        if (isSignedIn()) {
-            attachRecyclerViewAdapter();
-        } else {
-            startActivityForResult(
-                    AuthUI.getInstance().createSignInIntentBuilder().setAvailableProviders(
-                            Arrays.asList(
-                                    new AuthUI.IdpConfig.GoogleBuilder().build()
-                            )
-                    ).build(), RC_SIGN_IN);
-        }
+    public void startSignIn() {
+        startActivityForResult(
+                AuthUI.getInstance().createSignInIntentBuilder().setAvailableProviders(
+                        Arrays.asList(
+                                new AuthUI.IdpConfig.GoogleBuilder().build()
+                        )
+                ).build(), RC_SIGN_IN);
     }
 
     private boolean isSignedIn() {
         return FirebaseAuth.getInstance().getCurrentUser() != null;
     }
 
-    public void launchSettings(){
-        SettingsFragment settingsFragment = new SettingsFragment();
-        FragmentManager fm = getSupportFragmentManager();
-        FragmentTransaction fragmentTransaction = fm
-                .beginTransaction();
-        recyclerView.setVisibility(View.GONE);
-        fragmentTransaction.replace(R.id.frame_layout,
-                settingsFragment).addToBackStack(null).commit();
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_sort_list:
-                reverseList();
-                return true;
-            case R.id.action_settings:
-                launchSettings();
-                return true;
-            case R.id.action_delete_all:
-                showDeletionDialog(recyclerView);
-                return true;
-            case android.R.id.home:
-                onBackPressed();
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
-        }
-    }
-
-    private void clearMessages(int position){
-        SharedPrefHelper.clearMessages(this, position);
-        showSnackbar(R.string.delete_message_toast);
-    }
-
-    private void clearMessages() {
-        SharedPrefHelper.clearMessages(this);
-        showSnackbar(R.string.delete_all_toast);
-    }
-
-    private void reverseList(){
-        linearLayoutManager.setReverseLayout(!linearLayoutManager.getReverseLayout());
-        linearLayoutManager.setStackFromEnd(!linearLayoutManager.getStackFromEnd());
-    }
-
-    @Override
-    public void onBackPressed() {
-        recyclerView.setVisibility(View.VISIBLE);
-        getSupportActionBar().setDisplayShowCustomEnabled(false);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(false);
-        getSupportActionBar().setDisplayShowTitleEnabled(true);
-        super.onBackPressed();
-    }
-
-
-    private void attachRecyclerViewAdapter() {
-        messageList = SharedPrefHelper.getMsgArrayList(MainActivity.this);
-        adapter = new RecyclerViewAdapter(this, messageList, this);
-        sharedPreferences.registerOnSharedPreferenceChangeListener(listener);
-        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(recyclerView.getContext(),
-                DividerItemDecoration.VERTICAL);
-        recyclerView.addItemDecoration(dividerItemDecoration);
-        recyclerView.setAdapter(adapter);
-        linearLayoutManager = new LinearLayoutManager(this);
-        recyclerView.setLayoutManager(linearLayoutManager);
-        adapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
-            @Override
-            public void onItemRangeInserted(int positionStart, int itemCount) {
-                recyclerView.smoothScrollToPosition(0);
-            }
-        });
-    }
-
-    @Override
-    public void recyclerViewListClicked(View v, int position){
-        SingleMessageFragment messageFragment = new SingleMessageFragment();
-        Bundle b = new Bundle();
-        b.putString(getString(R.string.selected_message_key), adapter.getItem(position));
-        b.putInt(getString(R.string.selected_message_position), position);
-        messageFragment.setArguments(b);
-        FragmentManager fm = getSupportFragmentManager();
-        FragmentTransaction fragmentTransaction = fm
-                .beginTransaction();
-        fragmentTransaction.replace(R.id.frame_layout,
-                messageFragment).addToBackStack(null).commit();
-    }
-
-    public void closeMessage() {
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        SingleMessageFragment messageFragment = (SingleMessageFragment) fragmentManager
-                .findFragmentById(R.id.frame_layout);
-        if (messageFragment != null) {
-            FragmentTransaction fragmentTransaction =
-                    fragmentManager.beginTransaction();
-            fragmentTransaction.remove(messageFragment).commit();
-        }
-    }
-
     private void showSnackbar(@StringRes int snackMessage) {
         Snackbar.make(findViewById(android.R.id.content), snackMessage, Snackbar.LENGTH_LONG).show();
     }
-
-    public void showDeletionDialog(View view){
-        builder = new AlertDialog.Builder(this);
-        builder.setTitle(R.string.confirm_deletion_alert).
-                setMessage(R.string.delete_all_alert);
-        builder.setPositiveButton(R.string.continue_dialog_button, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int id) {
-                clearMessages();
-            }
-        });
-
-        builder.setNegativeButton(R.string.cancel_dialog_button, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int id) {
-                dialog.dismiss();
-            }
-        });
-        dialog = builder.create();
-        dialog.show();
-    }
-
-    public void showDeletionDialog(View view, int selection) {
-        final int selected = selection;
-        builder = new AlertDialog.Builder(this);
-        builder.setTitle(R.string.confirm_deletion_alert).
-                setMessage(R.string.delete_one_alert);
-        builder.setPositiveButton(R.string.continue_dialog_button, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int id) {
-                clearMessages(selected);
-                getSupportFragmentManager().popBackStack();
-                getSupportActionBar().setDisplayShowCustomEnabled(false);
-                getSupportActionBar().setDisplayHomeAsUpEnabled(false);
-                getSupportActionBar().setDisplayShowTitleEnabled(true);
-            }
-        });
-
-        builder.setNegativeButton(R.string.cancel_dialog_button, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int id) {
-                dialog.dismiss();
-            }
-        });
-        dialog = builder.create();
-        dialog.show();
-    }
-
-    @Override
-    public void onAttachFragment(Fragment fragment) {
-        if (fragment instanceof SingleMessageFragment) {
-            SingleMessageFragment singleMessageFragment = (SingleMessageFragment) fragment;
-            singleMessageFragment.setOnMessageDeletionListener(this);
-        }
-    }
-
-    public void singleMessageDeletion(int position) {
-        showDeletionDialog(recyclerView, position);
-    }
 }
-
-

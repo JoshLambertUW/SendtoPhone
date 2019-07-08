@@ -11,5 +11,5 @@
         android:summary="Clear all messages and stop this device from appearing on other devices"/>
     <android.support.v7.preference.Preference
         android:key="logout"
-        android:title="Log Out"/>
+        android:title="Logout"/>
 </android.support.v7.preference.PreferenceScreen>

@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/action_sort_list"
-        android:icon="@drawable/ic_sort_holo_dark"
+        android:icon="@drawable/ic_sort_holo_light"
         android:title="@string/action_sort"
         app:showAsAction="ifRoom"/>
     <item

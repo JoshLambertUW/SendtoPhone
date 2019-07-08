@@ -33,5 +33,8 @@
     <string name="continue_dialog_button">Continue</string>
     <string name="cancel_dialog_button">Cancel</string>
     <string name="confirm_account_alert">Confirm Account Deletion</string>
-    <string name="delete_account_alert">Are you sure you want to delete you account? This will delete all incoming messages and prevent your device from appearing on other devices.</string>
+    <string name="welcome_message">Welcome! To receive messages, download the Send to Phone extension for Chrome.</string>
+    <string name="delete_account_alert">Are you sure you want to delete this device? This will delete all incoming messages and prevent your device from appearing on other devices.</string>
+
+    <string name="login_button">Login</string>
 </resources>
