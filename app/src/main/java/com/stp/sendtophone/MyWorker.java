@@ -10,9 +10,10 @@ import androidx.work.WorkerParameters;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.iid.FirebaseInstanceId;
 
 import java.util.ArrayList;
@@ -24,8 +25,8 @@ public class MyWorker extends Worker {
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
     private String userUid = FirebaseAuth.getInstance().getUid();
     private String instanceId = FirebaseInstanceId.getInstance().getId();
-    private DocumentReference docRef = db.collection("users").document(userUid).
-            collection("devices").document(instanceId);
+    private CollectionReference colRef = db.collection("users").document(userUid).
+            collection("devices").document(instanceId).collection("messages");
 
     private static Context context;
 
@@ -39,20 +40,16 @@ public class MyWorker extends Worker {
     public Result doWork() {
         // Get all new messages, save them into local storage, clear message queue
         try {
-            docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            colRef.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                 @Override
-                public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                public void onComplete(@NonNull Task<QuerySnapshot> task) {
                     if (task.isSuccessful()) {
-                        DocumentSnapshot document = task.getResult();
-                        if (document.exists()) {
-                            final ArrayList<String> newMessages = (ArrayList<String>) document.get(context.getString(R.string.messages_key));
-                            if (newMessages.size() > 0){
-                                SharedPrefHelper.saveNewMessages(context, newMessages);
-                                docRef.update(context.getString(R.string.messages_key), new ArrayList<String>());
-                            }
-                        } else {
-                            Log.d(TAG, "No such document");
+                        ArrayList<String> newMessages = new ArrayList<>();
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            newMessages.add((String) document.getData().get("message"));
+                            document.getReference().delete();
                         }
+                        SharedPrefHelper.saveNewMessages(context, newMessages);
                     } else {
                         Log.d(TAG, "messageDocumentFailure", task.getException());
                     }

@@ -8,7 +8,7 @@
     <string name="delete_message_toast">Message deleted!</string>
     <string name="delete_all_toast">All messages deleted!</string>
     DB Keys
-    <string name="messages_key">messages</string>
+    <string name="messages_key">message</string>
     <string name="selected_message_key">selectedmessage</string>
     <string name="device_name_key">deviceName</string>
     <string name="fcm_token_key">fcmToken</string>
