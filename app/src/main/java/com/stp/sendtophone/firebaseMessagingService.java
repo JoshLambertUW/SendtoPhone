@@ -40,6 +40,7 @@ public class firebaseMessagingService extends FirebaseMessagingService {
      * If entire message was received in the remoteMessage (less than 4KB),
      * a preview is generated and message is saved.
      * If not, a worker thread is queued to download from database.
+     *
      * @param remoteMessage Object representing the message received from Firebase Cloud Messaging.
      */
 
@@ -96,6 +97,7 @@ public class firebaseMessagingService extends FirebaseMessagingService {
 
     /**
      * Saves a received message from FCM
+     *
      * @param message
      */
     private void handleNow(String message) {
@@ -122,6 +124,7 @@ public class firebaseMessagingService extends FirebaseMessagingService {
     /**
      * Create and show a large notification containing a preview of the FCM message.
      * Used for previews larger than 40 characters
+     *
      * @param messagePreview generated or received from FCM message body.
      */
 
