@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void registerDevice(){
+    private void registerDevice() {
         userUid = FirebaseAuth.getInstance().getUid();
         instanceId = FirebaseInstanceId.getInstance().getId();
         docRef = db.collection("users").document(userUid).
@@ -98,10 +98,9 @@ public class MainActivity extends AppCompatActivity {
                                     public void onComplete(@NonNull Task<InstanceIdResult> task) {
                                         String deviceName;
                                         BluetoothAdapter myDevice = BluetoothAdapter.getDefaultAdapter();
-                                        if (myDevice != null && myDevice.getName() != ""){
+                                        if (myDevice != null && myDevice.getName() != "") {
                                             deviceName = myDevice.getName();
-                                        }
-                                        else {
+                                        } else {
                                             deviceName = Build.MANUFACTURER + " " + Build.MODEL;
                                         }
                                         Map<String, Object> newDevice = new HashMap<>();

@@ -67,12 +67,14 @@ public class ListActivity extends AppCompatActivity implements RecyclerViewAdapt
         });
         */
     }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu_main, menu);
         return true;
     }
+
     @Override
     public void onStart() {
         super.onStart();
@@ -85,7 +87,7 @@ public class ListActivity extends AppCompatActivity implements RecyclerViewAdapt
         sharedPreferences.unregisterOnSharedPreferenceChangeListener(listener);
     }
 
-    public void launchSettings(){
+    public void launchSettings() {
         SettingsFragment settingsFragment = new SettingsFragment();
         FragmentManager fm = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fm
@@ -115,7 +117,7 @@ public class ListActivity extends AppCompatActivity implements RecyclerViewAdapt
         }
     }
 
-    private void clearMessages(int position){
+    private void clearMessages(int position) {
         SharedPrefHelper.clearMessages(this, position);
         showSnackbar(R.string.delete_message_toast);
     }
@@ -125,7 +127,7 @@ public class ListActivity extends AppCompatActivity implements RecyclerViewAdapt
         showSnackbar(R.string.delete_all_toast);
     }
 
-    private void reverseList(){
+    private void reverseList() {
         linearLayoutManager.setReverseLayout(!linearLayoutManager.getReverseLayout());
         linearLayoutManager.setStackFromEnd(!linearLayoutManager.getStackFromEnd());
     }
@@ -160,7 +162,7 @@ public class ListActivity extends AppCompatActivity implements RecyclerViewAdapt
     }
 
     @Override
-    public void recyclerViewListClicked(View v, int position){
+    public void recyclerViewListClicked(View v, int position) {
         SingleMessageFragment messageFragment = new SingleMessageFragment();
         Bundle b = new Bundle();
         b.putString(getString(R.string.selected_message_key), adapter.getItem(position));
@@ -188,7 +190,7 @@ public class ListActivity extends AppCompatActivity implements RecyclerViewAdapt
         Snackbar.make(findViewById(android.R.id.content), snackMessage, Snackbar.LENGTH_LONG).show();
     }
 
-    public void showDeletionDialog(View view){
+    public void showDeletionDialog(View view) {
         builder = new AlertDialog.Builder(this);
         builder.setTitle(R.string.confirm_deletion_alert).
                 setMessage(R.string.delete_all_alert);

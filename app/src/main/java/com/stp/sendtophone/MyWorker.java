@@ -47,7 +47,7 @@ public class MyWorker extends Worker {
                         ArrayList<String> newMessages = new ArrayList<>();
                         for (QueryDocumentSnapshot document : task.getResult()) {
                             newMessages.add((String) document.getData().get("message"));
-                            document.getReference().delete();
+//                            document.getReference().delete();
                         }
                         SharedPrefHelper.saveNewMessages(context, newMessages);
                     } else {

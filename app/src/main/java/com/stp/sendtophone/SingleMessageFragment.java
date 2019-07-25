@@ -32,7 +32,7 @@ public class SingleMessageFragment extends Fragment {
     private String selectedMessage;
     private int selectedmessagePosition;
 
-    public SingleMessageFragment(){
+    public SingleMessageFragment() {
     }
 
     public static SingleMessageFragment newInstance(String selectedMessage, int selectedmessagePosition) {
@@ -83,8 +83,8 @@ public class SingleMessageFragment extends Fragment {
         myShareActionProvider.setShareIntent(myShareIntent);
     }
 
-    public void addToClipboard(){
-        ClipboardManager clipboard = (ClipboardManager)getContext().getSystemService(CLIPBOARD_SERVICE);
+    public void addToClipboard() {
+        ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(CLIPBOARD_SERVICE);
         ClipData clip = ClipData.newPlainText("Message", selectedMessage);
         clipboard.setPrimaryClip(clip);
         showSnackbar(R.string.added_to_clipboard);

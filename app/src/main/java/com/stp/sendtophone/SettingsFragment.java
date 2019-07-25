@@ -56,7 +56,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
-        if (FirebaseAuth.getInstance().getCurrentUser() != null){
+        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
             setPreferencesFromResource(R.xml.settings, rootKey);
             //Preference notifications = findPreference("notifications");
             Preference deviceDeletion = findPreference("device_deletion");
@@ -70,13 +70,15 @@ public class SettingsFragment extends PreferenceFragmentCompat {
                     builder.setPositiveButton(R.string.continue_dialog_button, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int id) {
-                            deleteDevice(); }
+                            deleteDevice();
+                        }
                     });
 
                     builder.setNegativeButton(R.string.cancel_dialog_button, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int id) {
-                            dialog.dismiss(); }
+                            dialog.dismiss();
+                        }
                     });
                     dialog = builder.create();
                     dialog.show();
@@ -99,7 +101,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
         }
     }
 
-    private void deleteDevice(){
+    private void deleteDevice() {
         db = FirebaseFirestore.getInstance();
         instanceId = FirebaseInstanceId.getInstance().getId();
         userUid = FirebaseAuth.getInstance().getUid();

@@ -34,6 +34,7 @@ public class firebaseMessagingService extends FirebaseMessagingService {
     private String userUid;
     private String instanceId;
     private DocumentReference docRef;
+
     /**
      * Called when message is received.
      *
@@ -49,8 +50,10 @@ public class firebaseMessagingService extends FirebaseMessagingService {
             if (remoteMessage.getData().containsKey("message")) {
                 String message = remoteMessage.getData().get("message");
                 if (message.length() < 40) sendNotification(message);
-                else if (message.length() > 40 && message.length() < 447) sendNotification(message.substring(0,40));
-                else sendLargeNotification(message.substring(0,37) + "...", message.substring(0, 447) + "...");
+                else if (message.length() > 40 && message.length() < 447)
+                    sendNotification(message.substring(0, 40));
+                else
+                    sendLargeNotification(message.substring(0, 37) + "...", message.substring(0, 447) + "...");
                 handleNow(message);
             } else {
                 sendLargeNotification(remoteMessage.getData().get("messagePreview"), remoteMessage.getData().get("messagePreviewExtended"));
@@ -98,7 +101,7 @@ public class firebaseMessagingService extends FirebaseMessagingService {
 
     /**
      * Persist token to third-party servers.
-     *
+     * <p>
      * Modify this method to associate the user's FCM InstanceID token with any server-side account
      * maintained by your application.
      *
@@ -137,7 +140,7 @@ public class firebaseMessagingService extends FirebaseMessagingService {
                         .setSound(defaultSoundUri)
                         .setContentIntent(pendingIntent)
                         .setStyle(new NotificationCompat.BigTextStyle()
-                        .bigText(messagePreviewExtended));
+                                .bigText(messagePreviewExtended));
 
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);

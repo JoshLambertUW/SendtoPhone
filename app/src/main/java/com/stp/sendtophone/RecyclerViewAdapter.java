@@ -46,10 +46,13 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         return messageList.size();
     }
 
-    public String getItem(int id) { return messageList.get(id); }
+    public String getItem(int id) {
+        return messageList.get(id);
+    }
 
     public static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         public TextView mTextView;
+
         public ViewHolder(View itemView) {
             super(itemView);
             itemView.setOnClickListener(this);
@@ -57,8 +60,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         }
 
         @Override
-        public void onClick(View view)
-        {
+        public void onClick(View view) {
             itemListener.recyclerViewListClicked(view, getLayoutPosition());
         }
     }
