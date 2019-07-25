@@ -37,7 +37,9 @@ public class firebaseMessagingService extends FirebaseMessagingService {
 
     /**
      * Called when message is received.
-     *
+     * If entire message was received in the remoteMessage (less than 4KB),
+     * a preview is generated and message is saved.
+     * If not, a worker thread is queued to download from database.
      * @param remoteMessage Object representing the message received from Firebase Cloud Messaging.
      */
 
@@ -77,6 +79,7 @@ public class firebaseMessagingService extends FirebaseMessagingService {
 
     /**
      * Schedule async work using WorkManager.
+     * Worker threads will be completed sequentially in this implementation.
      */
     private void scheduleJob() {
         Constraints constraints = new Constraints.Builder()
@@ -92,6 +95,7 @@ public class firebaseMessagingService extends FirebaseMessagingService {
     }
 
     /**
+     * Saves a received message from FCM
      * @param message
      */
     private void handleNow(String message) {
@@ -100,10 +104,8 @@ public class firebaseMessagingService extends FirebaseMessagingService {
     }
 
     /**
-     * Persist token to third-party servers.
-     * <p>
-     * Modify this method to associate the user's FCM InstanceID token with any server-side account
-     * maintained by your application.
+     * Saves supplied FCM token to existing account
+     * FCM token may be automatically updated
      *
      * @param token The new token.
      */
@@ -118,9 +120,9 @@ public class firebaseMessagingService extends FirebaseMessagingService {
     }
 
     /**
-     * Create and show a simple notification containing the received FCM message.
-     *
-     * @param messagePreview received from FCM message body.
+     * Create and show a large notification containing a preview of the FCM message.
+     * Used for previews larger than 40 characters
+     * @param messagePreview generated or received from FCM message body.
      */
 
     private void sendLargeNotification(String messagePreview, String messagePreviewExtended) {
@@ -155,6 +157,12 @@ public class firebaseMessagingService extends FirebaseMessagingService {
         notificationManager.notify(0 /* ID of notification */, notificationBuilder.build());
     }
 
+    /**
+     * Create and show a normal notification containing a preview of the FCM message.
+     * Used when message is less than 40 characters.
+     *
+     * @param messagePreview generated or received from FCM message body.
+     */
 
     private void sendNotification(String messagePreview) {
         Intent intent = new Intent(this, MainActivity.class);

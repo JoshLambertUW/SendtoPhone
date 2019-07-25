@@ -21,7 +21,6 @@ import java.util.ArrayList;
 public class MyWorker extends Worker {
 
     private static final String TAG = "MyWorker";
-    private String messagesFromDB = "";
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
     private String userUid = FirebaseAuth.getInstance().getUid();
     private String instanceId = FirebaseInstanceId.getInstance().getId();
@@ -47,7 +46,7 @@ public class MyWorker extends Worker {
                         ArrayList<String> newMessages = new ArrayList<>();
                         for (QueryDocumentSnapshot document : task.getResult()) {
                             newMessages.add((String) document.getData().get("message"));
-//                            document.getReference().delete();
+                            document.getReference().delete();
                         }
                         SharedPrefHelper.saveNewMessages(context, newMessages);
                     } else {

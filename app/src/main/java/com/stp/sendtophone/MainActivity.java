@@ -32,7 +32,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-// Features: Send from device
+/**
+ * Launcher activity used primarily to handle authentication
+ */
 
 public class MainActivity extends AppCompatActivity {
     private static final int RC_SIGN_IN = 808;
