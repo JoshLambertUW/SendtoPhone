@@ -4,12 +4,6 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.annotation.StringRes;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.Fragment;
-import android.support.v4.view.MenuItemCompat;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.ShareActionProvider;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -18,12 +12,19 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import androidx.annotation.StringRes;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.ShareActionProvider;
+import androidx.core.view.MenuItemCompat;
+import androidx.fragment.app.Fragment;
+
+import com.google.android.material.snackbar.Snackbar;
+
 import static android.content.Context.CLIPBOARD_SERVICE;
 
 public class SingleMessageFragment extends Fragment {
     public static String TAG = "MessageFragment";
     private TextView messageTextView;
-    private ShareActionProvider shareActionProvider;
     SingleMessageDeletionListener callback;
 
     private static final String MESSAGE_ARG = "selectedmessage";
@@ -95,7 +96,7 @@ public class SingleMessageFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_delete:
-                callback.singleMessageDeletion(selectedmessagePosition);
+                callback.singleMessageDeletion("inbox", selectedmessagePosition);
                 return true;
             case R.id.action_copy:
                 addToClipboard();
@@ -110,7 +111,7 @@ public class SingleMessageFragment extends Fragment {
     }
 
     public interface SingleMessageDeletionListener {
-        void singleMessageDeletion(int selectedmessagePosition);
+        void singleMessageDeletion(String type, int selectedmessagePosition);
     }
 
     private void showSnackbar(@StringRes int snackMessage) {

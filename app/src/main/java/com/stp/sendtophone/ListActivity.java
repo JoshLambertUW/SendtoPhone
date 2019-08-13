@@ -1,23 +1,26 @@
 package com.stp.sendtophone;
 
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.annotation.StringRes;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.DividerItemDecoration;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+
+import androidx.annotation.StringRes;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +41,7 @@ public class ListActivity extends AppCompatActivity implements RecyclerViewAdapt
         @Override
         public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
             messageList.clear();
-            List<String> updatedMessages = SharedPrefHelper.getMsgArrayList(ListActivity.this);
+            List<String> updatedMessages = SharedPrefHelper.getMsgArrayList(ListActivity.this, "inbox");
             messageList.addAll(updatedMessages);
             adapter.notifyDataSetChanged();
         }
@@ -55,17 +58,31 @@ public class ListActivity extends AppCompatActivity implements RecyclerViewAdapt
         setSupportActionBar(myToolbar);
         sharedPreferences = getSharedPreferences(getString(R.string.preference_file_key),
                 MODE_PRIVATE);
-        /*
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+
+        Intent intent = getIntent();
+        String action = intent.getAction();
+        String type = intent.getType();
+
+        if (Intent.ACTION_SEND.equals(action) && type != null) {
+            if ("text/plain".equals(type)) {
+                String sharedMessage = intent.getStringExtra(Intent.EXTRA_TEXT);
+                if (sharedMessage != null) {
+                    sendMessage(sharedMessage);
+                }
             }
-        });
-        */
+        }
+
+        //
+        //FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        //FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        //fab.setOnClickListener(new View.OnClickListener() {
+        //@Override
+        //public void onClick(View view) {
+        //Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+        //.setAction("Action", null).show();
+        //}
+        //});
+        //
     }
 
     @Override
@@ -107,7 +124,7 @@ public class ListActivity extends AppCompatActivity implements RecyclerViewAdapt
                 launchSettings();
                 return true;
             case R.id.action_delete_all:
-                showDeletionDialog(recyclerView);
+                showDeletionDialog("inbox");
                 return true;
             case android.R.id.home:
                 onBackPressed();
@@ -117,13 +134,13 @@ public class ListActivity extends AppCompatActivity implements RecyclerViewAdapt
         }
     }
 
-    private void clearMessages(int position) {
-        SharedPrefHelper.clearMessages(this, position);
+    private void clearMessages(String type, int position) {
+        SharedPrefHelper.clearMessages(this, position, type);
         showSnackbar(R.string.delete_message_toast);
     }
 
-    private void clearMessages() {
-        SharedPrefHelper.clearMessages(this);
+    private void clearMessages(String type) {
+        SharedPrefHelper.clearMessages(this, type);
         showSnackbar(R.string.delete_all_toast);
     }
 
@@ -142,7 +159,7 @@ public class ListActivity extends AppCompatActivity implements RecyclerViewAdapt
     }
 
     private void attachRecyclerViewAdapter() {
-        messageList = SharedPrefHelper.getMsgArrayList(ListActivity.this);
+        messageList = SharedPrefHelper.getMsgArrayList(ListActivity.this, "inbox");
         adapter = new RecyclerViewAdapter(this, messageList, this);
         sharedPreferences.registerOnSharedPreferenceChangeListener(listener);
         DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(recyclerView.getContext(),
@@ -159,6 +176,33 @@ public class ListActivity extends AppCompatActivity implements RecyclerViewAdapt
                 recyclerView.smoothScrollToPosition(0);
             }
         });
+    }
+
+    public void sendMessage(String message){
+        SendFragment sendFragment = SendFragment.newInstance(message);
+        FragmentManager fm = getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = fm
+                .beginTransaction();
+        fragmentTransaction.replace(R.id.frame_layout,
+                sendFragment).addToBackStack(null).commit();
+    }
+
+    public void sendMessage(String message, int messagePosition){
+        SendFragment sendFragment = SendFragment.newInstance(message, messagePosition);
+        FragmentManager fm = getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = fm
+                .beginTransaction();
+        fragmentTransaction.replace(R.id.frame_layout,
+                sendFragment).addToBackStack(null).commit();
+    }
+
+    public void sendMessage(){
+        SendFragment sendFragment = new SendFragment();
+        FragmentManager fm = getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = fm
+                .beginTransaction();
+        fragmentTransaction.replace(R.id.frame_layout,
+                sendFragment).addToBackStack(null).commit();
     }
 
     @Override
@@ -190,14 +234,14 @@ public class ListActivity extends AppCompatActivity implements RecyclerViewAdapt
         Snackbar.make(findViewById(android.R.id.content), snackMessage, Snackbar.LENGTH_LONG).show();
     }
 
-    public void showDeletionDialog(View view) {
+    public void showDeletionDialog(final String type) {
         builder = new AlertDialog.Builder(this);
         builder.setTitle(R.string.confirm_deletion_alert).
                 setMessage(R.string.delete_all_alert);
         builder.setPositiveButton(R.string.continue_dialog_button, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int id) {
-                clearMessages();
+                clearMessages(type);
             }
         });
 
@@ -211,15 +255,14 @@ public class ListActivity extends AppCompatActivity implements RecyclerViewAdapt
         dialog.show();
     }
 
-    public void showDeletionDialog(View view, int selection) {
-        final int selected = selection;
+    public void showDeletionDialog(final String type, final int selected) {
         builder = new AlertDialog.Builder(this);
         builder.setTitle(R.string.confirm_deletion_alert).
                 setMessage(R.string.delete_one_alert);
         builder.setPositiveButton(R.string.continue_dialog_button, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int id) {
-                clearMessages(selected);
+                clearMessages(type, selected);
                 getSupportFragmentManager().popBackStack();
                 getSupportActionBar().setDisplayShowCustomEnabled(false);
                 getSupportActionBar().setDisplayHomeAsUpEnabled(false);
@@ -243,10 +286,14 @@ public class ListActivity extends AppCompatActivity implements RecyclerViewAdapt
             SingleMessageFragment singleMessageFragment = (SingleMessageFragment) fragment;
             singleMessageFragment.setOnMessageDeletionListener(this);
         }
+        else if (fragment instanceof SendFragment) {
+            SendFragment sendFragment = (SendFragment) fragment;
+            sendFragment.setOnMessageDeletionListener(this);
+        }
     }
 
-    public void singleMessageDeletion(int position) {
-        showDeletionDialog(recyclerView, position);
+    public void singleMessageDeletion(String type, int position) {
+        showDeletionDialog(type, position);
     }
 }
 

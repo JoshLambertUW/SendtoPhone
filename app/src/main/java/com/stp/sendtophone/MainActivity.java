@@ -4,14 +4,14 @@ import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.StringRes;
-import android.support.design.widget.Snackbar;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.ErrorCodes;
@@ -20,6 +20,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -27,7 +28,6 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -60,6 +60,7 @@ public class MainActivity extends AppCompatActivity {
                 startSignIn();
             }
         });
+
     }
 
     @Override
@@ -106,7 +107,6 @@ public class MainActivity extends AppCompatActivity {
                                             deviceName = Build.MANUFACTURER + " " + Build.MODEL;
                                         }
                                         Map<String, Object> newDevice = new HashMap<>();
-                                        newDevice.put(getString(R.string.messages_key), new ArrayList<String>());
                                         newDevice.put(getString(R.string.device_name_key), deviceName);
                                         String token = task.getResult().getToken();
                                         newDevice.put(getString(R.string.fcm_token_key), token);
