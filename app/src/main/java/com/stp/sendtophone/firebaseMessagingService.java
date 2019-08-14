@@ -101,7 +101,7 @@ public class firebaseMessagingService extends FirebaseMessagingService {
      * @param message
      */
     private void handleNow(String message) {
-        SharedPrefHelper.saveNewMessage(this, message);
+        SharedPrefHelper.saveNewMessage(this, message, "inbox");
         Log.d(TAG, "Short lived task is done.");
     }
 

@@ -22,6 +22,8 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.material.snackbar.Snackbar;
 
+import java.util.ArrayList;
+
 public class SendFragment extends Fragment implements AdapterView.OnItemSelectedListener {
     public static String TAG = "SendFragment";
     private EditText editText;
@@ -95,11 +97,24 @@ public class SendFragment extends Fragment implements AdapterView.OnItemSelected
 
     //toDo: Get device list from prefs, implement download/update device list from database
     private void getDeviceList(){
+        ArrayList<Device> deviceList = SharedPrefHelper.getDeviceList(context);
 
-        ArrayAdapter<String> dataAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, deviceList);
-        dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        ArrayAdapter<Device> dataAdapter = new ArrayAdapter<Device>(this, android.R.layout.simple_spinner_dropdown_item, deviceList);
         spinner.setAdapter(dataAdapter);
+        spinner.setSelection(dataAdapter.getPosition(defaultDeviceObj));
+
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                Device d = (Device) parent.getSelectedItem();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
     }
+
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {

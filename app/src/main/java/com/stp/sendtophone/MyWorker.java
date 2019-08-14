@@ -48,7 +48,7 @@ public class MyWorker extends Worker {
                             newMessages.add((String) document.getData().get("message"));
                             document.getReference().delete();
                         }
-                        SharedPrefHelper.saveNewMessages(context, newMessages);
+                        SharedPrefHelper.saveNewMessages(context, newMessages, "inbox");
                     } else {
                         Log.d(TAG, "messageDocumentFailure", task.getException());
                     }
