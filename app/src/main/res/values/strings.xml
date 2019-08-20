@@ -8,6 +8,9 @@
     <string name="delete_all_toast">All messages deleted!</string>
     <string name="save_draft_toast">Message saved to drafts!</string>
     <string name="save_draft_error_toast">Message is too short!</string>
+    <string name="device_register_error_toast">There was an issue sending to this device. Make sure that the app is installed on the device and then try refreshing the device list from the extension.</string>
+    <string name="unknown_send_error_toast">Unable to send. Please try again later.</string>
+    <string name="send_success_toast">Message successfully sent!</string>
     DB Keys
     <string name="messages_key">message</string>
     <string name="selected_message_key">selectedmessage</string>
@@ -32,7 +35,7 @@
     <string name="preference_history_key">pref_history</string>
     <string name="preference_drafts_key">pref_drafts</string>
     <string name="preference_device_map_key">pref_device_list</string>
-    <string name="preference_default_device_id_key">pref_default_device</string>
+    <string name="preference_default_device_key">pref_default_device</string>
     <string name="draft">Draft</string>
     Dialog strings
     <string name="confirm_deletion_alert">Confirm Deletion</string>

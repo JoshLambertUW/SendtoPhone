@@ -14,25 +14,36 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.ShareActionProvider;
 import androidx.core.view.MenuItemCompat;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.functions.FirebaseFunctions;
+import com.google.firebase.functions.HttpsCallableResult;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-public class SendFragment extends Fragment implements AdapterView.OnItemSelectedListener {
+public class SendFragment extends Fragment {
     public static String TAG = "SendFragment";
     private EditText editText;
     SingleMessageFragment.SingleMessageDeletionListener callback;
+    private FirebaseFunctions mFunctions;
 
     private static final String MESSAGE_ARG = "messagetosend";
     private static final String POSITION_ARG = "messagetosendposition";
 
     private String messageToSend;
+    private Device destination;
     private int messageToSendPosition = -1;
     private static Context context;
     private Button btn;
@@ -74,11 +85,6 @@ public class SendFragment extends Fragment implements AdapterView.OnItemSelected
     }
 
     @Override
-    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        String device = parent.getItemAtPosition(position).toString();
-    }
-
-    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
@@ -86,7 +92,6 @@ public class SendFragment extends Fragment implements AdapterView.OnItemSelected
         editText = view.findViewById(R.id.edit_text);
         btn = view.findViewById(R.id.button);
         spinner = view.findViewById(R.id.spinner);
-        spinner.setOnItemSelectedListener(this);
         getDeviceList();
         if (messageToSend != null) editText.setText(messageToSend);
         ((AppCompatActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -97,20 +102,20 @@ public class SendFragment extends Fragment implements AdapterView.OnItemSelected
 
     //toDo: Get device list from prefs, implement download/update device list from database
     private void getDeviceList(){
-        ArrayList<Device> deviceList = SharedPrefHelper.getDeviceList(context);
+        final List<Device> deviceList = SharedPrefHelper.getDeviceList(context);
 
-        ArrayAdapter<Device> dataAdapter = new ArrayAdapter<Device>(this, android.R.layout.simple_spinner_dropdown_item, deviceList);
+        ArrayAdapter<Device> dataAdapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_spinner_dropdown_item, deviceList);
         spinner.setAdapter(dataAdapter);
-        spinner.setSelection(dataAdapter.getPosition(defaultDeviceObj));
 
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                Device d = (Device) parent.getSelectedItem();
+                destination = (Device) parent.getSelectedItem();
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
+                return;
             }
         });
     }
@@ -169,8 +174,54 @@ public class SendFragment extends Fragment implements AdapterView.OnItemSelected
         }
     }
 
+    private void sendMessage() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("message", messageToSend);
+        data.put("selectedDevice", destination.getId());
+
+        FirebaseFunctions.getInstance().getHttpsCallable("sendData")
+                .call(data)
+                .addOnCompleteListener(new OnCompleteListener<HttpsCallableResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<HttpsCallableResult> task) {
+                        if (task.isSuccessful()) {
+                            Gson g = new Gson();
+                            JsonObject result = g.fromJson((String)task.getResult().getData(), JsonObject.class);
+                            String error = "";
+                            if (result.get("successCount").getAsInt() < 1){
+                                error = result.get("results").getAsJsonArray().get(0).getAsJsonObject()
+                                        .get("error").getAsJsonObject().get("code").getAsString();
+                                if (error.equals("messaging/registration-token-not-registered") ||
+                                error.equals("messaging/invalid-registration-token")){
+                                    showSnackbar(R.string.device_register_error_toast);
+                                }
+                                else {
+                                    showSnackbar(R.string.unknown_send_error_toast);
+                                }
+                            }
+                            else {
+                                showSnackbar(R.string.send_success_toast);
+                            }
+                            Map<String, Object> data = new HashMap<>();
+                            data.put("message", messageToSend);
+                            data.put("selectedDevice", destination);
+                            data.put("error", error);
+                            addToHistory(data);
+
+                        } else {
+                            showSnackbar(R.string.unknown_send_error_toast);
+                        }
+                    }
+                });
+    }
+
+    private void addToHistory(Map<String, Object> data){
+        Gson g = new Gson();
+        g.toJson(data);
+        SharedPrefHelper.saveNewMessage(context, g.toJson(data), "history");
+    }
+
     private void showSnackbar(@StringRes int snackMessage) {
         Snackbar.make(getView().findViewById(android.R.id.content), snackMessage, Snackbar.LENGTH_LONG).show();
     }
 }
-

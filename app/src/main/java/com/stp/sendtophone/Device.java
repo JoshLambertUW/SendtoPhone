@@ -6,6 +6,9 @@ public class Device {
     private String name;
     private String id;
 
+    public Device(){
+    }
+
     public Device(String name, String id) {
         this.name = name;
         this.id = id;
