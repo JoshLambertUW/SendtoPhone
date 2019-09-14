@@ -16,5 +16,5 @@
         android:icon="@drawable/ic_share_holo_dark"
         android:title="@string/action_share"
         app:showAsAction="ifRoom"
-        app:actionProviderClass="android.support.v7.widget.ShareActionProvider" />
+        app:actionProviderClass="androidx.appcompat.widget.ShareActionProvider" />
 </menu>

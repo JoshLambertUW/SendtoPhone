@@ -120,7 +120,6 @@ public class SendFragment extends Fragment {
         });
     }
 
-
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
@@ -139,7 +138,7 @@ public class SendFragment extends Fragment {
                 return true;
             case R.id.action_delete_draft:
                 if (messageToSend != null && messageToSendPosition >= 0){
-                    callback.singleMessageDeletion(context.getString(R.string.draft), messageToSendPosition);
+                    callback.singleMessageDeletion(messageToSendPosition);
                 }
                 else {
                     editText.getText().clear();
@@ -162,10 +161,12 @@ public class SendFragment extends Fragment {
         String messageDraft = editText.getText().toString().trim();
         if (messageDraft != null && messageDraft.length() > 0) {
             if (messageToSendPosition >= 0) {
-                SharedPrefHelper.editMessage(context, messageDraft, context.getString(R.string.draft), messageToSendPosition);
+                SharedPrefHelper.editMessage(context, messageDraft, messageToSendPosition, 1);
             }
             else {
-                SharedPrefHelper.saveNewMessage(context, messageDraft, context.getString(R.string.draft));
+                Message newMessageDraft = new Message(messageDraft);
+                if (destination != null) newMessageDraft.setSelectedDevice(destination);
+                SharedPrefHelper.saveNewMessage(context, newMessageDraft, 1);
             }
             showSnackbar(R.string.save_draft_toast);
         }
@@ -202,11 +203,8 @@ public class SendFragment extends Fragment {
                             else {
                                 showSnackbar(R.string.send_success_toast);
                             }
-                            Map<String, Object> data = new HashMap<>();
-                            data.put("message", messageToSend);
-                            data.put("selectedDevice", destination);
-                            data.put("error", error);
-                            addToHistory(data);
+                            Message sentMessage = new Message(messageToSend, destination, error);
+                            addToHistory(sentMessage);
 
                         } else {
                             showSnackbar(R.string.unknown_send_error_toast);
@@ -215,10 +213,8 @@ public class SendFragment extends Fragment {
                 });
     }
 
-    private void addToHistory(Map<String, Object> data){
-        Gson g = new Gson();
-        g.toJson(data);
-        SharedPrefHelper.saveNewMessage(context, g.toJson(data), "history");
+    private void addToHistory(Message message){
+        SharedPrefHelper.saveNewMessage(context, message, 2);
     }
 
     private void showSnackbar(@StringRes int snackMessage) {

@@ -43,12 +43,13 @@ public class MyWorker extends Worker {
                 @Override
                 public void onComplete(@NonNull Task<QuerySnapshot> task) {
                     if (task.isSuccessful()) {
-                        ArrayList<String> newMessages = new ArrayList<>();
+                        ArrayList<Message> newMessages = new ArrayList<>();
                         for (QueryDocumentSnapshot document : task.getResult()) {
-                            newMessages.add((String) document.getData().get("message"));
+                            Message newMessage = new Message((String) document.getData().get("message"));
+                            newMessages.add(newMessage);
                             document.getReference().delete();
                         }
-                        SharedPrefHelper.saveNewMessages(context, newMessages, "inbox");
+                        SharedPrefHelper.saveNewMessages(context, newMessages, 0);
                     } else {
                         Log.d(TAG, "messageDocumentFailure", task.getException());
                     }

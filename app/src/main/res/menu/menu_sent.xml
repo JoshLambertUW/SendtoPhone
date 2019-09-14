@@ -11,10 +11,6 @@
         android:title="@string/action_launch_rec"
         app:showAsAction="never" />
     <item
-        android:id="@+id/action_launch_sent"
-        android:title="@string/action_launch_sent"
-        app:showAsAction="never" />
-    <item
         android:id="@+id/action_launch_drafts"
         android:title="@string/action_launch_drafts"
         app:showAsAction="never" />

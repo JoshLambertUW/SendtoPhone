@@ -13,10 +13,10 @@
     <string name="send_success_toast">Message successfully sent!</string>
     DB Keys
     <string name="messages_key">message</string>
-    <string name="selected_message_key">selectedmessage</string>
+    <string name="selected_message_key">selectedMessage</string>
     <string name="device_name_key">deviceName</string>
     <string name="fcm_token_key">fcmToken</string>
-    <string name="selected_message_position">selectedmessageposition</string>
+    <string name="selected_message_position">selectedMessagePosition</string>
     <string name="outgoing_message_key">messagetosend</string>
     Actions
     <string name="action_delete">Delete message</string>
@@ -26,6 +26,9 @@
     <string name="action_settings">Settings</string>
     <string name="action_copy">Copy to clipboard</string>
     <string name="action_sort">Sort received messages</string>
+    <string name="action_launch_rec">Received</string>
+    <string name="action_launch_sent">Sent messages</string>
+    <string name="action_launch_drafts">Drafts</string>
     Cloud messaging
     <string name="default_notification_channel_id">fcm_default_channel</string>
     <string name="fcm_message">New messaged received</string>

@@ -25,22 +25,39 @@ import static android.content.Context.CLIPBOARD_SERVICE;
 public class SingleMessageFragment extends Fragment {
     public static String TAG = "MessageFragment";
     private TextView messageTextView;
+    private TextView sentStatusTextView;
+    private TextView sentDeviceTextView;
     SingleMessageDeletionListener callback;
 
-    private static final String MESSAGE_ARG = "selectedmessage";
-    private static final String POSITION_ARG = "selectedmessageposition";
+    private static final String MESSAGE_ARG = "selectedMessage";
+    private static final String POSITION_ARG = "selectedMessagePosition";
+    private static final String STATUS_ARG = "sentMessageStatus";
+    private static final String DEVICE_NAME_ARG = "deviceName";
 
     private String selectedMessage;
-    private int selectedmessagePosition;
+    private int selectedMessagePosition;
+    private String sentMessageStatus;
+    private String deviceName;
 
     public SingleMessageFragment() {
     }
 
-    public static SingleMessageFragment newInstance(String selectedMessage, int selectedmessagePosition) {
+    public static SingleMessageFragment newInstance(String selectedMessage, int selectedMessagePosition) {
         SingleMessageFragment fragment = new SingleMessageFragment();
         Bundle args = new Bundle();
         args.putString(MESSAGE_ARG, selectedMessage);
-        args.putInt(POSITION_ARG, selectedmessagePosition);
+        args.putInt(POSITION_ARG, selectedMessagePosition);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    public static SingleMessageFragment newInstance(String selectedMessage, int selectedMessagePosition, String sentMessageStatus, String deviceName) {
+        SingleMessageFragment fragment = new SingleMessageFragment();
+        Bundle args = new Bundle();
+        args.putString(MESSAGE_ARG, selectedMessage);
+        args.putInt(POSITION_ARG, selectedMessagePosition);
+        args.putString(STATUS_ARG, sentMessageStatus);
+        args.putString(DEVICE_NAME_ARG, deviceName);
         fragment.setArguments(args);
         return fragment;
     }
@@ -49,13 +66,21 @@ public class SingleMessageFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+        Bundle arguments = getArguments();
 
-        if (getArguments() != null) {
-            selectedMessage = getArguments().getString(getString(R.string.selected_message_key));
-            selectedmessagePosition = getArguments().getInt(getString(R.string.selected_message_position));
+        if (arguments != null) {
+            selectedMessage = arguments.getString(MESSAGE_ARG);
+            selectedMessagePosition = arguments.getInt(POSITION_ARG);
+            if (arguments.containsKey(STATUS_ARG)) sentMessageStatus = arguments.getString(STATUS_ARG);
+            if (arguments.containsKey(DEVICE_NAME_ARG)) deviceName = arguments.getString(DEVICE_NAME_ARG);
         }
     }
 
+    /*
+        private TextView sentStatusTextView;
+    private TextView sentDeviceTextView;
+
+     */
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -63,6 +88,14 @@ public class SingleMessageFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_single_message, container, false);
         messageTextView = view.findViewById(R.id.single_message_text_view);
         messageTextView.setText(selectedMessage);
+        if (sentMessageStatus != null && sentMessageStatus.length() > 0){
+            sentStatusTextView = view.findViewById(R.id.status_text_view);
+            sentStatusTextView.setText(sentMessageStatus);
+        }
+        if (deviceName != null && deviceName.length() > 0){
+            sentDeviceTextView = view.findViewById(R.id.device_text_view);
+            sentDeviceTextView.setText(deviceName);
+        }
         ((AppCompatActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         ((AppCompatActivity) getActivity()).getSupportActionBar().setDisplayShowTitleEnabled(false);
 
@@ -91,12 +124,11 @@ public class SingleMessageFragment extends Fragment {
         showSnackbar(R.string.added_to_clipboard);
     }
 
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_delete:
-                callback.singleMessageDeletion("inbox", selectedmessagePosition);
+                callback.singleMessageDeletion(selectedMessagePosition);
                 return true;
             case R.id.action_copy:
                 addToClipboard();
@@ -111,7 +143,7 @@ public class SingleMessageFragment extends Fragment {
     }
 
     public interface SingleMessageDeletionListener {
-        void singleMessageDeletion(String type, int selectedmessagePosition);
+        void singleMessageDeletion(int selectedMessagePosition);
     }
 
     private void showSnackbar(@StringRes int snackMessage) {

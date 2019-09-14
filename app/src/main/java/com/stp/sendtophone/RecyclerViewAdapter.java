@@ -1,6 +1,5 @@
 package com.stp.sendtophone;
 
-import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,19 +11,15 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
 public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder> {
-    private List<String> messageList;
-    private LayoutInflater mInflater;
-    private Context context;
+    private List<Message> messageList;
     private static RecyclerViewClickListener itemListener;
 
     public interface RecyclerViewClickListener {
         void recyclerViewListClicked(View v, int position);
     }
 
-    public RecyclerViewAdapter(Context context, List<String> data, RecyclerViewClickListener itemListener) {
-        this.context = context;
+    public RecyclerViewAdapter(List<Message> data, RecyclerViewClickListener itemListener) {
         RecyclerViewAdapter.itemListener = itemListener;
-        this.mInflater = LayoutInflater.from(context);
         this.messageList = data;
     }
 
@@ -38,7 +33,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerViewAdapter.ViewHolder holder, int position) {
-        String message = messageList.get(position);
+        String message = messageList.get(position).getBody();
         holder.mTextView.setText(message);
     }
 
@@ -47,8 +42,9 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         return messageList.size();
     }
 
-    public String getItem(int id) {
-        return messageList.get(id);
+    public Message getItem(int id) {
+        Message message = messageList.get(id);
+        return message;
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
