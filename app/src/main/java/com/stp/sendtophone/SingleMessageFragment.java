@@ -76,11 +76,6 @@ public class SingleMessageFragment extends Fragment {
         }
     }
 
-    /*
-        private TextView sentStatusTextView;
-    private TextView sentDeviceTextView;
-
-     */
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
